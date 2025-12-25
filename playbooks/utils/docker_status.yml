@@ -1,0 +1,62 @@
+---
+- name: Docker Network and Application Status
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Check if Docker is installed
+      command: which docker
+      register: docker_check
+      changed_when: false
+      failed_when: false
+    
+    - name: Fail if Docker is not installed
+      fail:
+        msg: "Docker is not installed. Please install Docker first using the docker utility."
+      when: docker_check.rc != 0
+    
+    - name: List Docker networks
+      command: docker network ls
+      register: docker_networks
+      changed_when: false
+    
+    - name: Display Docker networks
+      debug:
+        msg: "{{ docker_networks.stdout_lines }}"
+    
+    - name: List running containers
+      command: docker ps
+      register: docker_containers
+      changed_when: false
+    
+    - name: Display running containers
+      debug:
+        msg: "{{ docker_containers.stdout_lines }}"
+    
+    - name: List all containers
+      command: docker ps -a
+      register: docker_all_containers
+      changed_when: false
+    
+    - name: Display all containers
+      debug:
+        msg: "{{ docker_all_containers.stdout_lines }}"
+    
+    - name: Get Docker system info
+      command: docker system df
+      register: docker_info
+      changed_when: false
+    
+    - name: Display Docker system info
+      debug:
+        msg: "{{ docker_info.stdout_lines }}"
+    
+    - name: List Docker images
+      command: docker images
+      register: docker_images
+      changed_when: false
+    
+    - name: Display Docker images
+      debug:
+        msg: "{{ docker_images.stdout_lines }}"
+

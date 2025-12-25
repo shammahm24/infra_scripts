@@ -1,0 +1,90 @@
+# Local Testing Commands - Quick Reference
+
+# ============================================
+# SAFE COMMANDS (No Changes to System)
+# ============================================
+
+# 1. Test Ansible connectivity
+ansible all -i inventory/local.ini -m ping
+
+# 2. Test playbook syntax (no execution)
+ansible-playbook --syntax-check playbooks/basic.yml
+
+# 3. Dry-run (shows what would change, no actual changes)
+ansible-playbook -i inventory/local.ini playbooks/basic.yml --check
+
+# 4. List tasks in playbook
+ansible-playbook -i inventory/local.ini playbooks/basic.yml --list-tasks
+
+# 5. Test Docker status (read-only, safe)
+ansible-playbook -i inventory/local.ini playbooks/utils/docker_status.yml
+
+# 6. Test with verbose output
+ansible-playbook -i inventory/local.ini playbooks/basic.yml --check -v
+
+# ============================================
+# TESTING WITH TUI
+# ============================================
+
+# Run TUI and select localhost
+./tui.sh
+# Then in TUI:
+# 1. Select "Server Configurations"
+# 2. Select "Basic server" (or any config)
+# 3. Select "localhost"
+# 4. Review execution plan
+
+# ============================================
+# ACTUAL EXECUTION (WARNING: Installs Software!)
+# ============================================
+
+# ⚠️ WARNING: These commands will install software on your local machine!
+
+# Install basic server (Python + Node.js)
+ansible-playbook -i inventory/local.ini playbooks/basic.yml
+
+# Install Docker
+ansible-playbook -i inventory/local.ini playbooks/utils/docker.yml -e "action=install"
+
+# ============================================
+# TEST INDIVIDUAL COMPONENTS
+# ============================================
+
+# Test Python role only
+cat > /tmp/test_python.yml << 'YAML'
+---
+- hosts: localhost
+  become: yes
+  roles:
+    - python
+YAML
+ansible-playbook -i inventory/local.ini /tmp/test_python.yml --check
+
+# Test Node.js role only
+cat > /tmp/test_nodejs.yml << 'YAML'
+---
+- hosts: localhost
+  become: yes
+  roles:
+    - nodejs
+YAML
+ansible-playbook -i inventory/local.ini /tmp/test_nodejs.yml --check
+
+# ============================================
+# TEST UTILITY FUNCTIONS
+# ============================================
+
+# Test port management (dry-run)
+ansible-playbook -i inventory/local.ini playbooks/utils/ports.yml \
+  -e "action=block port=8080 protocol=tcp" --check
+
+# Test nginx setup (dry-run)
+ansible-playbook -i inventory/local.ini playbooks/utils/nginx.yml \
+  -e "domain=test.local server_port=3000 enable_ssl=no" --check
+
+# ============================================
+# QUICK TEST SCRIPT
+# ============================================
+
+# Run automated local test
+./test_local.sh

@@ -1,0 +1,24 @@
+---
+- name: Basic Server Setup
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Create persistent storage directory
+      file:
+        path: /opt/apps
+        state: directory
+        mode: '0755'
+    
+    - name: Install Python 3.11
+      include_role:
+        name: python
+    
+    - name: Install Node.js
+      include_role:
+        name: nodejs
+    
+    - name: Display completion message
+      debug:
+        msg: "Basic server setup completed: Python 3.11 and Node.js installed"
+

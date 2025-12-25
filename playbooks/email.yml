@@ -1,0 +1,20 @@
+---
+- name: Email Server Setup
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Create mail directory
+      file:
+        path: /var/mail
+        state: directory
+        mode: '0755'
+    
+    - name: Install Email Server
+      include_role:
+        name: email
+    
+    - name: Display completion message
+      debug:
+        msg: "Email server setup completed. Postfix and Dovecot are running."
+

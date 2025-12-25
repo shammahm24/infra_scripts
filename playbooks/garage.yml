@@ -1,0 +1,20 @@
+---
+- name: Garage Blob Storage Server Setup
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Create Garage persistent directory
+      file:
+        path: /var/lib/garage
+        state: directory
+        mode: '0755'
+    
+    - name: Install Garage
+      include_role:
+        name: garage
+    
+    - name: Display completion message
+      debug:
+        msg: "Garage blob storage server setup completed"
+

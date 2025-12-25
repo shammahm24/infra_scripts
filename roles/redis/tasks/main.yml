@@ -1,0 +1,53 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Install Redis dependencies
+  apt:
+    name:
+      - curl
+      - ca-certificates
+    state: present
+  become: yes
+
+- name: Add Redis repository key
+  apt_key:
+    url: https://download.redis.io/redis-stable.tar.gz.asc
+    state: present
+  when: false  # Redis is typically in default repos
+
+- name: Install latest Redis
+  apt:
+    name: redis-server
+    state: latest
+    update_cache: yes
+  become: yes
+
+- name: Ensure Redis is running
+  systemd:
+    name: redis-server
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Create persistent data directory
+  file:
+    path: "{{ redis_data_dir | default('/var/lib/redis') }}"
+    state: directory
+    owner: redis
+    group: redis
+    mode: '0755'
+  become: yes
+
+- name: Configure Redis persistence
+  lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: "^dir "
+    line: "dir {{ redis_data_dir | default('/var/lib/redis') }}"
+    backup: yes
+  become: yes
+  notify: restart redis
+

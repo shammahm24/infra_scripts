@@ -1,0 +1,39 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Install email server dependencies
+  apt:
+    name:
+      - postfix
+      - dovecot-core
+      - dovecot-imapd
+      - dovecot-pop3d
+      - mailutils
+    state: present
+  become: yes
+
+- name: Ensure Postfix is running
+  systemd:
+    name: postfix
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Ensure Dovecot is running
+  systemd:
+    name: dovecot
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Create mail directory
+  file:
+    path: /var/mail
+    state: directory
+    mode: '0755'
+  become: yes
+

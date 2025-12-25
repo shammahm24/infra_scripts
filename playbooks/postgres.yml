@@ -1,0 +1,22 @@
+---
+- name: PostgreSQL Server Setup
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Create database persistent directory
+      file:
+        path: /var/lib/postgresql/data
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0700'
+    
+    - name: Install PostgreSQL
+      include_role:
+        name: postgresql
+    
+    - name: Display completion message
+      debug:
+        msg: "PostgreSQL server setup completed"
+

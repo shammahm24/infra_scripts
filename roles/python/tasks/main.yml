@@ -1,0 +1,34 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Install Python 3.11 dependencies
+  apt:
+    name:
+      - python3.11
+      - python3.11-venv
+      - python3.11-dev
+      - python3-pip
+      - build-essential
+      - libssl-dev
+      - libffi-dev
+    state: present
+  become: yes
+
+- name: Set Python 3.11 as default python3
+  alternatives:
+    name: python3
+    path: /usr/bin/python3.11
+    priority: 100
+  become: yes
+
+- name: Upgrade pip
+  pip:
+    name: pip
+    state: latest
+    executable: pip3
+  become: yes
+

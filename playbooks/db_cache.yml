@@ -1,0 +1,48 @@
+---
+- name: Server with Database and Cache Setup
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Create persistent storage directory
+      file:
+        path: /opt/apps
+        state: directory
+        mode: '0755'
+    
+    - name: Create database persistent directory
+      file:
+        path: /var/lib/postgresql/data
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0700'
+    
+    - name: Create Redis persistent directory
+      file:
+        path: /var/lib/redis
+        state: directory
+        owner: redis
+        group: redis
+        mode: '0755'
+    
+    - name: Install Python 3.11
+      include_role:
+        name: python
+    
+    - name: Install Node.js
+      include_role:
+        name: nodejs
+    
+    - name: Install PostgreSQL
+      include_role:
+        name: postgresql
+    
+    - name: Install Redis
+      include_role:
+        name: redis
+    
+    - name: Display completion message
+      debug:
+        msg: "Database and cache server setup completed: Python 3.11, Node.js, PostgreSQL, and Redis installed"
+

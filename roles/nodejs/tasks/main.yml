@@ -1,0 +1,52 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Install Node.js dependencies
+  apt:
+    name:
+      - curl
+      - ca-certificates
+      - gnupg
+    state: present
+  become: yes
+
+- name: Add NodeSource repository key
+  apt_key:
+    url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+    state: present
+  become: yes
+
+- name: Add NodeSource repository
+  apt_repository:
+    repo: "deb https://deb.nodesource.com/node_lts.x {{ ansible_distribution_release }} main"
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Install latest Node.js
+  apt:
+    name: nodejs
+    state: latest
+    update_cache: yes
+  become: yes
+
+- name: Verify Node.js installation
+  command: node --version
+  register: node_version
+  changed_when: false
+
+- name: Display Node.js version
+  debug:
+    msg: "Node.js {{ node_version.stdout }} installed successfully"
+
+- name: Install npm globally
+  npm:
+    name: npm
+    global: yes
+    state: latest
+  become: yes
+

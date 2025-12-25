@@ -1,0 +1,22 @@
+---
+- name: Redis Server Setup
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Create Redis persistent directory
+      file:
+        path: /var/lib/redis
+        state: directory
+        owner: redis
+        group: redis
+        mode: '0755'
+    
+    - name: Install Redis
+      include_role:
+        name: redis
+    
+    - name: Display completion message
+      debug:
+        msg: "Redis server setup completed"
+

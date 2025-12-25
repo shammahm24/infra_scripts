@@ -1,0 +1,51 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Install PostgreSQL dependencies
+  apt:
+    name:
+      - wget
+      - ca-certificates
+    state: present
+  become: yes
+
+- name: Add PostgreSQL APT repository key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+  become: yes
+
+- name: Add PostgreSQL repository
+  apt_repository:
+    repo: "deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Install latest PostgreSQL
+  apt:
+    name: postgresql
+    state: latest
+    update_cache: yes
+  become: yes
+
+- name: Ensure PostgreSQL is running
+  systemd:
+    name: postgresql
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Create persistent data directory
+  file:
+    path: "{{ postgresql_data_dir | default('/var/lib/postgresql/data') }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+  become: yes
+

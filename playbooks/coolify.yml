@@ -1,0 +1,14 @@
+---
+- name: Coolify Server Setup
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Install Coolify
+      include_role:
+        name: coolify
+    
+    - name: Display completion message
+      debug:
+        msg: "Coolify server setup completed. Access Coolify at the configured address."
+

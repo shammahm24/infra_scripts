@@ -1,0 +1,57 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Install Garage dependencies
+  apt:
+    name:
+      - curl
+      - wget
+      - ca-certificates
+    state: present
+  become: yes
+
+- name: Get latest Garage release version
+  uri:
+    url: https://api.github.com/repos/garagehq/garage/releases/latest
+    return_content: yes
+  register: garage_release
+  changed_when: false
+
+- name: Set Garage version
+  set_fact:
+    garage_version: "{{ garage_release.json.tag_name | default('v1.0.0') }}"
+
+- name: Download Garage binary
+  get_url:
+    url: "https://garagehq.deuxfleurs.fr/releases/{{ garage_version }}/x86_64-unknown-linux-musl/garage"
+    dest: /usr/local/bin/garage
+    mode: '0755'
+  become: yes
+
+- name: Verify Garage installation
+  command: garage --version
+  register: garage_version_check
+  changed_when: false
+
+- name: Display Garage version
+  debug:
+    msg: "Garage {{ garage_version_check.stdout }} installed successfully"
+
+- name: Create persistent data directory
+  file:
+    path: "{{ garage_data_dir | default('/var/lib/garage') }}"
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Create Garage config directory
+  file:
+    path: /etc/garage
+    state: directory
+    mode: '0755'
+  become: yes
+

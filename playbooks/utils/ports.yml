@@ -1,0 +1,58 @@
+---
+- name: Port Management
+  hosts: all
+  become: yes
+  vars_prompt:
+    - name: action
+      prompt: "Action (block/unblock)"
+      default: "block"
+      private: no
+    - name: port
+      prompt: "Port number"
+      default: "80"
+      private: no
+    - name: protocol
+      prompt: "Protocol (tcp/udp)"
+      default: "tcp"
+      private: no
+  
+  tasks:
+    - name: Check if ufw is installed
+      command: which ufw
+      register: ufw_check
+      changed_when: false
+      failed_when: false
+    
+    - name: Install ufw if not present
+      apt:
+        name: ufw
+        state: present
+      when: ufw_check.rc != 0
+    
+    - name: Ensure ufw is active
+      ufw:
+        state: enabled
+    
+    - name: Block port
+      ufw:
+        rule: deny
+        port: "{{ port }}"
+        proto: "{{ protocol }}"
+      when: action == "block"
+    
+    - name: Unblock port
+      ufw:
+        rule: allow
+        port: "{{ port }}"
+        proto: "{{ protocol }}"
+      when: action == "unblock"
+    
+    - name: Display ufw status
+      command: ufw status
+      register: ufw_status
+      changed_when: false
+    
+    - name: Show firewall status
+      debug:
+        msg: "{{ ufw_status.stdout_lines }}"
+

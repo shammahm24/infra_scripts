@@ -1,0 +1,58 @@
+---
+- name: Nginx Setup for Services/Domains
+  hosts: all
+  become: yes
+  vars_prompt:
+    - name: domain
+      prompt: "Domain name (e.g., example.com)"
+      default: "example.com"
+      private: no
+    - name: server_port
+      prompt: "Backend server port"
+      default: "3000"
+      private: no
+    - name: enable_ssl
+      prompt: "Enable SSL? (yes/no)"
+      default: "no"
+      private: no
+  
+  tasks:
+    - name: Install Nginx
+      include_role:
+        name: nginx
+    
+    - name: Create nginx configuration file
+      template:
+        src: nginx_site.conf.j2
+        dest: "/etc/nginx/sites-available/{{ domain }}"
+        mode: '0644'
+      notify: reload nginx
+    
+    - name: Enable site
+      file:
+        src: "/etc/nginx/sites-available/{{ domain }}"
+        dest: "/etc/nginx/sites-enabled/{{ domain }}"
+        state: link
+      notify: reload nginx
+    
+    - name: Remove default nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: reload nginx
+    
+    - name: Test nginx configuration
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
+    
+    - name: Display nginx test result
+      debug:
+        msg: "{{ nginx_test.stdout }}"
+  
+  handlers:
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
+

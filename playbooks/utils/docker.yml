@@ -1,0 +1,48 @@
+---
+- name: Docker Setup and Management
+  hosts: all
+  become: yes
+  vars_prompt:
+    - name: action
+      prompt: "Action (install/status/cleanup)"
+      default: "install"
+      private: no
+  
+  tasks:
+    - name: Install Docker
+      include_role:
+        name: docker
+      when: action == "install"
+    
+    - name: Display Docker version
+      command: docker --version
+      register: docker_version
+      changed_when: false
+      when: action == "status"
+    
+    - name: Show Docker version
+      debug:
+        msg: "{{ docker_version.stdout }}"
+      when: action == "status"
+    
+    - name: Display Docker Compose version
+      command: docker compose version
+      register: docker_compose_version
+      changed_when: false
+      when: action == "status"
+    
+    - name: Show Docker Compose version
+      debug:
+        msg: "{{ docker_compose_version.stdout }}"
+      when: action == "status"
+    
+    - name: Clean up Docker (remove unused containers, networks, images)
+      shell: docker system prune -af
+      when: action == "cleanup"
+      register: docker_cleanup
+    
+    - name: Display cleanup results
+      debug:
+        msg: "{{ docker_cleanup.stdout }}"
+      when: action == "cleanup"
+

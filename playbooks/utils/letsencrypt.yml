@@ -1,0 +1,94 @@
+---
+- name: Let's Encrypt Automation with Nginx
+  hosts: all
+  become: yes
+  vars_prompt:
+    - name: domain
+      prompt: "Domain name (e.g., example.com)"
+      default: "example.com"
+      private: no
+    - name: email
+      prompt: "Email for Let's Encrypt notifications"
+      default: "admin@example.com"
+      private: no
+  
+  tasks:
+    - name: Install Nginx
+      include_role:
+        name: nginx
+    
+    - name: Install certbot
+      apt:
+        name:
+          - certbot
+          - python3-certbot-nginx
+        state: present
+        update_cache: yes
+    
+    - name: Create temporary nginx config for ACME challenge
+      template:
+        src: nginx_acme.conf.j2
+        dest: "/etc/nginx/sites-available/{{ domain }}"
+        mode: '0644'
+      notify: reload nginx
+    
+    - name: Enable site for ACME challenge
+      file:
+        src: "/etc/nginx/sites-available/{{ domain }}"
+        dest: "/etc/nginx/sites-enabled/{{ domain }}"
+        state: link
+      notify: reload nginx
+    
+    - name: Ensure nginx is running
+      systemd:
+        name: nginx
+        state: started
+    
+    - name: Generate Let's Encrypt certificate
+      command: >
+        certbot certonly
+        --nginx
+        --non-interactive
+        --agree-tos
+        --email {{ email }}
+        -d {{ domain }}
+      register: certbot_result
+      changed_when: "'Congratulations' in certbot_result.stdout or 'Certificate not yet due' in certbot_result.stdout"
+    
+    - name: Display certbot result
+      debug:
+        msg: "{{ certbot_result.stdout_lines }}"
+    
+    - name: Update nginx config with SSL
+      template:
+        src: nginx_ssl_site.conf.j2
+        dest: "/etc/nginx/sites-available/{{ domain }}"
+        mode: '0644'
+      notify: reload nginx
+    
+    - name: Test nginx configuration
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
+    
+    - name: Display nginx test result
+      debug:
+        msg: "{{ nginx_test.stdout }}"
+    
+    - name: Setup automatic renewal
+      cron:
+        name: "Renew Let's Encrypt certificates"
+        minute: "0"
+        hour: "2"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "/usr/bin/certbot renew --quiet --nginx"
+        user: root
+  
+  handlers:
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
+
